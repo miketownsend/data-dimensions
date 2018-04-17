@@ -210,3 +210,10 @@ Add a listener to an event. Events:
 
 ### off (event:string, handler:function)
 Remove a listener from an event.
+
+# Roadmap
+
+1. Rename some properties to simplify API
+2. Document code (add JSDoc annotations)
+3. Add DimensionManager to handle filter mapping between dimensions
+4. Add bundler / build
