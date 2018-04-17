@@ -1,0 +1,32 @@
+{
+  "name": "dimensions-canvasjs",
+  "version": "0.1.0",
+  "description": "Dimension library for building pivot charts using CanvasJS",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/miketownsend/dimensions-canvasjs.git"
+  },
+  "keywords": [
+    "canvasjs",
+    "dimensions",
+    "pivot",
+    "crossfilter"
+  ],
+  "author": "https://github.com/miketownsend",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/miketownsend/dimensions-chartjs/issues"
+  },
+  "homepage": "https://github.com/miketownsend/dimensions-chartjs#readme",
+  "dependencies": {
+    "lodash": "^4.17.5"
+  },
+  "devDependencies": {
+    "chai": "^4.1.2",
+    "mocha": "^5.1.0"
+  }
+}
