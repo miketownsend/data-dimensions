@@ -224,7 +224,7 @@ Remove a listener from an event.
 
 # Roadmap
 
-1. Rename some properties to simplify API (reduceSeries, valueAccessor, reduceGroup)
+1. DONE - Rename some properties to simplify API (reduceSeries, valueAccessor, reduceGroup)
 2. Document code (add JSDoc annotations)
 3. DONE - Add DimensionManager to handle filter mapping between dimensions
 4. Document Dimension Manager
