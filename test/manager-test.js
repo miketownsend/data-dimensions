@@ -26,18 +26,18 @@ describe('Dimension Manager', function () {
   before(function () {
     dim1 = new Dimension({
       id: 'dim1',
+      groupSeries: (d) => d.group,
+      groupData: (d) => d.a,
       reduceInit: (d) => ({ x: d.a, y: 0, count: 0 }),
-      reduceGroup: (d) => d.a,
-      reduceSeries: (d) => d.group,
       reduceAdd: (out, d) => { out.y += d.b },
       reduceRemove: (out, d) => { out.y -= d.b }
     })
 
     dim2 = new Dimension({
       id: 'dim2',
+      groupSeries: (d) => d.subgroup,
+      groupData: (d) => d.a,
       reduceInit: (d) => ({ x: d.a, y: 0, count: 0 }),
-      reduceGroup: (d) => d.a,
-      reduceSeries: (d) => d.subgroup,
       reduceAdd: (out, d) => { out.y += d.b },
       reduceRemove: (out, d) => { out.y -= d.b }
     })

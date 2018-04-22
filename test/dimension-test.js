@@ -24,9 +24,10 @@ describe('Aggregation and Filtering', function () {
 
   before(function () {
     dim = new Dimension({
+      id: 'dim1',
+      groupSeries: (d) => d.group,
+      groupData: (d) => d.a,
       reduceInit: (d) => ({ x: d.a, y: 0, count: 0 }),
-      reduceGroup: (d) => d.a,
-      reduceSeries: (d) => d.group,
       reduceAdd: (out, d) => { out.y += d.b },
       reduceRemove: (out, d) => { out.y -= d.b }
     })
@@ -112,14 +113,15 @@ describe('Splitting', function () {
 
   before(function () {
     dim = new Dimension({
+      id: 'dim',
       split: (d) => {
         let csvGroups = d.csvGroup.split(',').map(s => s.trim())
         let out = csvGroups.map(s => Object.assign({}, d, { csvGroup: s }))
         return out
       },
+      groupSeries: (d) => d.csvGroup,
+      groupData: (d) => d.a,
       reduceInit: (d) => ({ x: d.a, y: 0, count: 0 }),
-      reduceGroup: (d) => d.a,
-      reduceSeries: (d) => d.csvGroup,
       reduceAdd: (out, d) => { out.y += d.b },
       reduceRemove: (out, d) => { out.y -= d.b }
     })

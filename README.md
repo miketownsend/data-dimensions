@@ -15,6 +15,8 @@ Create crossfilter like dimensions compatible with [CanvasJS](https://canvasjs.c
 ## Example
 
 ```js
+const { Dimension} = require('canvasjs-dimensions')
+
 // With dataset
 const data = [
   { group: 'A', csvGroup: 'A,C', subgroup: 'one',   a: 1, b:    1 },
@@ -33,9 +35,10 @@ const data = [
 
 // Create a dimension
 const dim = new Dimension({
+  id: 'dim',
+  groupSeries: (d) => d.group,
+  groupData: (d) => d.a,
   reduceInit: (d) => ({ x: d.a, y: 0, count: 0 }),
-  reduceGroup: (d) => d.a,
-  reduceSeries: (d) => d.group,
   reduceAdd: (out, d) => { out.y += d.b },
   reduceRemove: (out, d) => { out.y -= d.b }
 })
@@ -100,11 +103,11 @@ new Dimension(options)
 ### id: string (required)
 A id for the dimension, should be unique)
 
+### name: string {defaults to id}
+A friendly name for the dimension - only for reference
+
 ### defaultSeries: object {{ type: 'line' }}
 An object with the default series config required for CanvasJS. Will be copied onto every new series.
-
-### dimensionName: string {defaults to id}
-A friendly name for the dimension - only for reference
 
 ### hideEmptyDataPoints: boolean {false}
 Whether to show datapoints which have been created, but filtered out.
@@ -115,14 +118,20 @@ A function to get the property of each data point which the filter will be appli
 ### filterFactory: function {Dimension.Filters.anySelectionMatchesValue}
 A factory which returns a filter. Passed the selection and the filterPredicate.
 
-### reduce: string {'SUM'}
-A helper function to use a default set of reduceAdd, reduceRemove and reduceInit. Options: `'MEAN' or 'SUM'`
-
-### reduceSeries: function {(d) => d.category}
+### groupSeries: {required}
 A predicate to select the value to separate the data into series.
 
-### reduceGroup: function {(d) => d.subcategory}
+### groupData: {required}
 A predicate to select the value to aggregate data within a series.
+
+### reduceInit: function {required}
+A predicate which returns the initial value of a reduced data point.
+
+### reduceAdd: function (required)
+A predicate which updates a data point based on a new data point being added to its group.
+
+### reduceRemove: function {required}
+A predicate which updates a data point based on a new data point being removed from its group.
 
 ### reduceSeriesColor: function
 A predicate to determine the color of a series. Passed the current series label.
@@ -151,6 +160,8 @@ const split = (d) => {
 
 ### sortKey {required}
 A key for lodash _.sortBy. The dataPoints array of each series will be sorted after each change in data (add, remove, filter).
+### sortFnc {required}
+A function for lodash _.sortBy. The dataPoints array of each series will be sorted after each change in data (add, remove, filter).
 
 # Dimension API
 
@@ -185,7 +196,7 @@ Returns the current selection from this dimension.
 ### getFilter ()
 Returns the filter for this dimension (or null if no filter exists). This filter can then be applied to other dimensions. Filter is built from current selection.
 
-## Apply Filters
+## Filters
 ### hasFilter (filter)
 Check whether a filter has already been applied to this dimension.
 
@@ -215,5 +226,7 @@ Remove a listener from an event.
 
 1. Rename some properties to simplify API (reduceSeries, valueAccessor, reduceGroup)
 2. Document code (add JSDoc annotations)
-3. Add DimensionManager to handle filter mapping between dimensions
-4. Add bundler / build
+3. DONE - Add DimensionManager to handle filter mapping between dimensions
+4. Document Dimension Manager
+6. Add non-happy path tests + parameter validation
+5. Add bundler / build
