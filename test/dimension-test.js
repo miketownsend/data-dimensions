@@ -1,33 +1,23 @@
 const { expect } = require('chai')
 const Dimension = require('../lib/dimension')
 
-const filterOne = { id: 'a', fnc: (d) => d.subgroup !== 'one' }
-const filterTwo = { id: 'b', fnc: (d) => d.subgroup !== 'two' }
+const data = require('./data')
 
-const data = [
-  { group: 'A', csvGroup: 'A,C', subgroup: 'one', a: 1, b:    1 },
-  { group: 'A', csvGroup: 'A,C', subgroup: 'one', a: 2, b:    2 },
-  { group: 'A', csvGroup: 'A,C', subgroup: 'one', a: 3, b:    3 },
-  { group: 'A', csvGroup: 'A', subgroup: 'two', a: 1, b:   10 },
-  { group: 'A', csvGroup: 'A', subgroup: 'two', a: 2, b:   20 },
-  { group: 'A', csvGroup: 'A', subgroup: 'two', a: 3, b:   30 },
-  { group: 'A', csvGroup: 'A,C', subgroup: 'three', a: 1, b:  100 },
-  { group: 'A', csvGroup: 'A,C', subgroup: 'three', a: 2, b:  200 },
-  { group: 'A', csvGroup: 'A,C', subgroup: 'three', a: 3, b:  300 },
-  { group: 'B', csvGroup: 'B', subgroup: 'one', a: 1, b: 1000 },
-  { group: 'B', csvGroup: 'B', subgroup: 'one', a: 2, b: 2000 },
-  { group: 'B', csvGroup: 'B', subgroup: 'one', a: 3, b: 3000 }
-]
+const filterOne = { id: 'subgroup:!one', fnc: (d) => d.subgroup !== 'one' }
+const filterTwo = { id: 'subgroup:!two', fnc: (d) => d.subgroup !== 'two' }
 
 describe('Aggregation and Filtering', function () {
+  this.timeout(240000)
+
   let dim, seriesA, seriesB
 
   before(function () {
     dim = new Dimension({
       id: 'dim1',
+      verbose: false,
       groupSeries: (d) => d.group,
       groupData: (d) => d.a,
-      reduceInit: (d) => ({ x: d.a, y: 0, count: 0 }),
+      reduceInit: (d) => ({ x: d.a, y: 0 }),
       reduceAdd: (out, d) => { out.y += d.b },
       reduceRemove: (out, d) => { out.y -= d.b }
     })
@@ -43,13 +33,17 @@ describe('Aggregation and Filtering', function () {
   })
 
   it('should group values correctly', function () {
-    expect(seriesA.dataPoints).to.have.lengthOf(3)
-    expect(seriesB.dataPoints).to.have.lengthOf(3)
+    expect(dim.findSeries('A').dataPoints).to.have.lengthOf(3)
+    expect(dim.findSeries('A').count).to.be.eq(9)
+    expect(dim.findSeries('B').dataPoints).to.have.lengthOf(3)
+    expect(dim.findSeries('B').count).to.be.eq(3)
   })
 
   it('should reduce groups correctly', function () {
-    expect(seriesA.dataPoints[0].y).to.be.eq(111)
-    expect(seriesB.dataPoints[0].y).to.be.eq(1000)
+    expect(dim.findSeries('A').dataPoints[0].y).to.be.eq(111)
+    expect(dim.findSeries('A').dataPoints[0].count).to.be.eq(3)
+    expect(dim.findSeries('B').dataPoints[0].y).to.be.eq(1000)
+    expect(dim.findSeries('B').dataPoints[0].count).to.be.eq(1)
   })
 
   it('should add filter correctly', function () {
@@ -57,13 +51,10 @@ describe('Aggregation and Filtering', function () {
 
     expect(dim.excludedData).to.have.lengthOf(6)
     expect(dim.includedData).to.have.lengthOf(6)
-    expect(seriesA.dataPoints[0].y).to.be.eq(110)
-    expect(seriesB.dataPoints).to.be.empty
-  })
-
-  it('should hide series if all data points filtered out', function () {
-    expect(seriesA.visible).to.be.eq(true)
-    expect(seriesB.visible).to.be.eq(false)
+    expect(dim.findSeries('A').dataPoints[0].y).to.be.eq(110)
+    expect(dim.findSeries('A').count).to.be.eq(6)
+    expect(dim.findSeries('B').dataPoints).to.be.empty
+    expect(dim.findSeries('B').count).to.be.eq(0)
   })
 
   it('should add a second filter correctly', function () {
@@ -71,8 +62,8 @@ describe('Aggregation and Filtering', function () {
 
     expect(dim.excludedData).to.have.lengthOf(9)
     expect(dim.includedData).to.have.lengthOf(3)
-    expect(seriesA.dataPoints[0].y).to.be.eq(100)
-    expect(seriesB.dataPoints).to.be.empty
+    expect(dim.findSeries('A').dataPoints[0].y).to.be.eq(100)
+    expect(dim.findSeries('B').dataPoints).to.be.empty
   })
 
   it('should remove a filter correctly', function () {
@@ -80,28 +71,40 @@ describe('Aggregation and Filtering', function () {
 
     expect(dim.excludedData).to.have.lengthOf(6)
     expect(dim.includedData).to.have.lengthOf(6)
-    expect(seriesA.dataPoints[0].y).to.be.eq(110)
-    expect(seriesB.dataPoints).to.have.lengthOf(0)
+    expect(dim.findSeries('A').dataPoints).to.have.lengthOf(3)
+    expect(dim.findSeries('A').dataPoints[0].y).to.be.eq(110)
+    // expect(dim.findSeries('A').count).to.be.eq(6)
+    expect(dim.findSeries('B').dataPoints).to.have.lengthOf(0)
+    // expect(dim.findSeries('B').count).to.be.eq(0)
   })
 
   it('should remove all filters correctly', function () {
     dim.removeFilter(filterOne)
+
     expect(dim.excludedData).to.have.lengthOf(0)
     expect(dim.includedData).to.have.lengthOf(12)
-    expect(seriesA.dataPoints[0].y).to.be.eq(111)
-    expect(seriesB.dataPoints[0].y).to.be.eq(1000)
+
+    expect(dim.findSeries('A').dataPoints).to.have.lengthOf(3)
+    expect(dim.findSeries('A').dataPoints[0].y).to.be.eq(111)
+    expect(dim.findSeries('B').dataPoints).to.have.lengthOf(3)
+    expect(dim.findSeries('B').dataPoints[0].y).to.be.eq(1000)
   })
 
   it('should add a data point correctly while filters are in place', function () {
     dim.addFilter(filterOne)
 
-    dim.addOne({ group: 'A', subgroup: 'one', a: 4, b: 4 })
-    dim.addOne({ group: 'A', subgroup: 'two', a: 4, b: 40 })
-    dim.addOne({ group: 'A', subgroup: 'three', a: 4, b: 400 })
-    dim.addOne({ group: 'B', subgroup: 'one', a: 4, b: 4000 })
+    dim.addMany([
+      { group: 'A', subgroup: 'one', a: 4, b: 4 },
+      { group: 'A', subgroup: 'two', a: 4, b: 40 },
+      { group: 'A', subgroup: 'three', a: 4, b: 400 },
+      { group: 'B', subgroup: 'one', a: 4, b: 4000 }
+    ])
 
+    const seriesA = dim.findSeries('A')
     expect(dim.excludedData).to.have.lengthOf(8)
     expect(dim.includedData).to.have.lengthOf(8)
+
+    expect(seriesA.dataPoints).to.have.lengthOf(4)
     expect(seriesA.dataPoints[0].y).to.be.eq(110)
     expect(seriesA.dataPoints[3].y).to.be.eq(440)
     expect(seriesB.dataPoints).to.have.lengthOf(0)
@@ -121,16 +124,12 @@ describe('Splitting', function () {
       },
       groupSeries: (d) => d.csvGroup,
       groupData: (d) => d.a,
-      reduceInit: (d) => ({ x: d.a, y: 0, count: 0 }),
+      reduceInit: (d) => ({ x: d.a, y: 0 }),
       reduceAdd: (out, d) => { out.y += d.b },
       reduceRemove: (out, d) => { out.y -= d.b }
     })
 
     dim.addMany(data)
-
-    seriesA = dim.data.find((series) => series.name === 'A')
-    seriesB = dim.data.find((series) => series.name === 'B')
-    seriesC = dim.data.find((series) => series.name === 'C')
   })
 
   it('should group series correctly', function () {
@@ -138,15 +137,15 @@ describe('Splitting', function () {
   })
 
   it('should group values correctly', function () {
-    expect(seriesA.dataPoints).to.have.lengthOf(3)
-    expect(seriesB.dataPoints).to.have.lengthOf(3)
-    expect(seriesC.dataPoints).to.have.lengthOf(3)
+    expect(dim.findSeries('A').dataPoints).to.have.lengthOf(3)
+    expect(dim.findSeries('B').dataPoints).to.have.lengthOf(3)
+    expect(dim.findSeries('C').dataPoints).to.have.lengthOf(3)
   })
 
   it('should reduce groups correctly', function () {
-    expect(seriesA.dataPoints[0].y).to.be.eq(111)
-    expect(seriesB.dataPoints[0].y).to.be.eq(1000)
-    expect(seriesC.dataPoints[0].y).to.be.eq(101)
+    expect(dim.findSeries('A').dataPoints[0].y).to.be.eq(111)
+    expect(dim.findSeries('B').dataPoints[0].y).to.be.eq(1000)
+    expect(dim.findSeries('C').dataPoints[0].y).to.be.eq(101)
   })
 
   it('should add filter correctly', function () {
@@ -154,14 +153,14 @@ describe('Splitting', function () {
 
     expect(dim.excludedData).to.have.lengthOf(9)
     expect(dim.includedData).to.have.lengthOf(9)
-    expect(seriesA.dataPoints[0].y).to.be.eq(110)
-    expect(seriesB.dataPoints).to.be.empty
-    expect(seriesC.dataPoints[0].y).to.be.eq(100)
+    expect(dim.findSeries('A').dataPoints[0].y).to.be.eq(110)
+    expect(dim.findSeries('B').dataPoints).to.be.empty
+    expect(dim.findSeries('C').dataPoints[0].y).to.be.eq(100)
   })
 
   it('should hide series if all data points filtered out', function () {
-    expect(seriesA.visible).to.be.eq(true)
-    expect(seriesB.visible).to.be.eq(false)
+    expect(dim.findSeries('A').visible).to.be.eq(true)
+    expect(dim.findSeries('B').visible).to.be.eq(false)
   })
 
   it('should add a second filter correctly', function () {
@@ -169,9 +168,9 @@ describe('Splitting', function () {
 
     expect(dim.excludedData).to.have.lengthOf(12)
     expect(dim.includedData).to.have.lengthOf(6)
-    expect(seriesA.dataPoints[0].y).to.be.eq(100)
-    expect(seriesC.dataPoints[0].y).to.be.eq(100)
-    expect(seriesB.dataPoints).to.be.empty
+    expect(dim.findSeries('A').dataPoints[0].y).to.be.eq(100)
+    expect(dim.findSeries('C').dataPoints[0].y).to.be.eq(100)
+    expect(dim.findSeries('B').dataPoints).to.be.empty
   })
 
   it('should remove a filter correctly', function () {
@@ -179,9 +178,9 @@ describe('Splitting', function () {
 
     expect(dim.excludedData).to.have.lengthOf(9)
     expect(dim.includedData).to.have.lengthOf(9)
-    expect(seriesA.dataPoints[0].y).to.be.eq(110)
-    expect(seriesC.dataPoints[0].y).to.be.eq(100)
-    expect(seriesB.dataPoints).to.have.lengthOf(0)
+    expect(dim.findSeries('A').dataPoints[0].y).to.be.eq(110)
+    expect(dim.findSeries('C').dataPoints[0].y).to.be.eq(100)
+    expect(dim.findSeries('B').dataPoints).to.have.lengthOf(0)
   })
 
   it('should remove all filters correctly', function () {
@@ -189,9 +188,9 @@ describe('Splitting', function () {
 
     expect(dim.excludedData).to.have.lengthOf(0)
     expect(dim.includedData).to.have.lengthOf(18)
-    expect(seriesA.dataPoints[0].y).to.be.eq(111)
-    expect(seriesB.dataPoints[0].y).to.be.eq(1000)
-    expect(seriesC.dataPoints[0].y).to.be.eq(101)
+    expect(dim.findSeries('A').dataPoints[0].y).to.be.eq(111)
+    expect(dim.findSeries('B').dataPoints[0].y).to.be.eq(1000)
+    expect(dim.findSeries('C').dataPoints[0].y).to.be.eq(101)
   })
 
   it('should add a data point correctly while filters are in place', function () {
@@ -204,11 +203,10 @@ describe('Splitting', function () {
 
     expect(dim.excludedData).to.have.lengthOf(12)
     expect(dim.includedData).to.have.lengthOf(12)
-    expect(seriesA.dataPoints[0].y).to.be.eq(110)
-    expect(seriesC.dataPoints[0].y).to.be.eq(100)
-    expect(seriesA.dataPoints[3].y).to.be.eq(440)
-    expect(seriesC.dataPoints[3].y).to.be.eq(400)
-    expect(seriesB.dataPoints).to.have.lengthOf(0)
+    expect(dim.findSeries('A').dataPoints[0].y).to.be.eq(110)
+    expect(dim.findSeries('C').dataPoints[0].y).to.be.eq(100)
+    expect(dim.findSeries('A').dataPoints[3].y).to.be.eq(440)
+    expect(dim.findSeries('C').dataPoints[3].y).to.be.eq(400)
+    expect(dim.findSeries('B').dataPoints).to.have.lengthOf(0)
   })
 })
-
