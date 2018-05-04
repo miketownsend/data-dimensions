@@ -1,6 +1,6 @@
-# CanvasJS Dimensions
+# Data Dimensions
 
-Create crossfilter like dimensions compatible with [CanvasJS](https://canvasjs.com/).
+Create crossfilter like data dimensions tool compatible with [CanvasJS](https://canvasjs.com/). Designed to make pivot tables and pivot charts simple.
 
 ## Features
 
@@ -181,7 +181,10 @@ Clears the cache and replays the input data through the dimensions reducers, fil
 ## Getters
 
 ### getData ()
-Returns the output data from this dimension. Not immutable so do not modify these data points.
+Returns the output data from this dimension. Returns a partial clone (series are cloned but not dataPoints).
+
+### findSeries (seriesName:string)
+Returns a data series (name = output of groupSeries) from the dimension
 
 ## Selection
 ### compareSelection(newSelection:string[])
@@ -218,15 +221,7 @@ Remove all filters applied to this dimension
 Add a listener to an event. Events:
 
 - `"change"` the data has changed
+- `"selection"` the selection on this dimension has changed
 
 ### off (event:string, handler:function)
 Remove a listener from an event.
-
-# Roadmap
-
-1. DONE - Rename some properties to simplify API (reduceSeries, valueAccessor, reduceGroup)
-2. Document code (add JSDoc annotations)
-3. DONE - Add DimensionManager to handle filter mapping between dimensions
-4. Document Dimension Manager
-6. Add non-happy path tests + parameter validation
-5. Add bundler / build
