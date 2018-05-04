@@ -7,8 +7,6 @@ const filterOne = { id: 'subgroup:!one', fnc: (d) => d.subgroup !== 'one' }
 const filterTwo = { id: 'subgroup:!two', fnc: (d) => d.subgroup !== 'two' }
 
 describe('Aggregation and Filtering', function () {
-  this.timeout(240000)
-
   let dim, seriesA, seriesB
 
   before(function () {
