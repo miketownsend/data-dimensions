@@ -45,6 +45,16 @@ describe('Dimension Manager', function () {
     manager.addData(data)
   })
 
+  it('should return the right dimension using getDimension', function () {
+    const dim1 = manager.getDimension('dim1')
+    expect(dim1).to.exist
+    expect(dim1.id).to.be.eq('dim1')
+  })
+
+  it('should return undefined when getDimension is called with a dimension that does not exist', function () {
+    expect(manager.getDimension('dim3')).to.not.exist
+  })
+
   it('should group series correctly', function () {
     expect(dim1.data).to.have.lengthOf(2)
     expect(dim2.data).to.have.lengthOf(3)
