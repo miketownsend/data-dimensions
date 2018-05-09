@@ -92,8 +92,7 @@ The structure of the output data is:
   },
 ]
 ```
-
-# Dimension Options
+# Dimension Class
 Options that can be passed to the constructor
 
 ```
@@ -215,13 +214,54 @@ Replace an applied filter with an updated filter
 ### clearFilters ()
 Remove all filters applied to this dimension
 
-## Event Handling
+## Event Handling (see [EventEmitter](https://nodejs.org/api/events.html#events_emitter_addlistener_eventname_listener))
+
+### on (event:string, handler:function)
+Add a listener to an event. Events: 'change' or 'selection'
+
+### removeListener (event:string, handler:function)
+Remove a listener from the Dimension.
+
+
+# DimensionManager Class
+
+### addDimension (dimension:Dimension)
+Adds a dimension to the manager, listening to the dimensions 'selection' event.
+
+### addData ()
+Adds data to each dimension, triggers a single 'change' event
+
+### getDimension (dimensionId:string) : Dimension
+Retrieve a dimension by ID
+
+### getData () : object
+Get the current data for all dimensions. Returns an object with key (id) : value (dimension) pairs. Will return a new object each time. Each series should also be new, but individual dataPoints are not cloned.
+
+```js
+// const dims = manager.getData()
+
+{
+  dim1: {
+    id: 'dim1',
+    name: 'Dimension 1',
+    data: [
+      name: 'Series1',
+      dataPoints: [{ ... }]
+    ]
+  },
+  dim2: {
+    ...
+  }
+}
+```
+
+### removeDimension (dimension:Dimension|string)
+Removes a dimension from the manager, can take either the dimension to remove OR the dimensionId
 
 ### on (event:string, handler:function)
 Add a listener to an event. Events:
 
-- `"change"` the data has changed
-- `"selection"` the selection on this dimension has changed
+- 'change': will only trigger on addData and selection. If data is added via an individual dimension, this will not be triggered.
 
-### off (event:string, handler:function)
-Remove a listener from an event.
+### removeListener (event:string, handler:function)
+Remove a listener from the Dimension.

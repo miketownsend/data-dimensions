@@ -71,8 +71,6 @@ describe('Dimension Manager', function () {
   it('adding selection to one dimension should affect the second dimension', function () {
     dim1.select('A')
 
-    expect(manager.handlers.length).to.be.eq(2)
-
     expect(dim1.excludedData).to.have.lengthOf(0)
     expect(dim1.includedData).to.have.lengthOf(12)
 
@@ -99,16 +97,13 @@ describe('Dimension Manager', function () {
   })
 
   it('should remove a dimension correctly', function () {
-    manager.removeDimension(dim1.id)
+    manager.removeDimension(dim1)
 
     expect(manager.dimensions.length).to.be.eq(1)
-    expect(manager.handlers.length).to.be.eq(0)
   })
 
   it('should not be affected by changes to removed dimensions', function () {
     dim1.select('A')
-
-    expect(manager.handlers.length).to.be.eq(0)
 
     expect(dim2.excludedData).to.have.lengthOf(0)
     expect(dim2.includedData).to.have.lengthOf(12)
@@ -122,9 +117,44 @@ describe('Dimension Manager', function () {
     dim1.select()
     dim2.select('one')
 
-    expect(manager.handlers.length).to.be.eq(0)
-
     expect(dim1.excludedData).to.have.lengthOf(0)
     expect(dim1.includedData).to.have.lengthOf(12)
+  })
+
+  it('should emit output data when selection changes', function () {
+    dim2.select()
+    manager.addDimension(dim1)
+    const check = function (data) {
+      expect(_.values(data)).to.have.lengthOf(2)
+      expect(data.dim1.data).to.have.lengthOf(2)
+      expect(data.dim2.data).to.have.lengthOf(3)
+      expect(data.dim1.data[0].dataPoints).to.have.lengthOf(3)
+    }
+
+    manager.on('change', check)
+    dim2.select('two')
+    manager.removeListener('change', check)
+  })
+
+  it('should emit a new object on selection change', function () {
+    let object1, object2
+    manager.addDimension(dim1)
+
+    const check1 = function (data) {
+      object1 = data
+    }
+
+    const check2 = function (data) {
+      object2 = data
+      expect(object2).to.not.eq(object1)
+    }
+
+    manager.on('change', check1)
+    dim2.select()
+    manager.removeListener('change', check1)
+
+    manager.on('change', check2)
+    dim2.select('two')
+    manager.removeListener('change', check2)
   })
 })
